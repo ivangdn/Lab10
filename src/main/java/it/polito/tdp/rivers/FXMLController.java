@@ -8,6 +8,9 @@ import java.net.URL;
 import java.util.ResourceBundle;
 
 import it.polito.tdp.rivers.model.Model;
+import it.polito.tdp.rivers.model.River;
+import it.polito.tdp.rivers.model.SimulationResult;
+import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
 import javafx.scene.control.Button;
 import javafx.scene.control.ComboBox;
@@ -25,7 +28,7 @@ public class FXMLController {
     private URL location;
 
     @FXML // fx:id="boxRiver"
-    private ComboBox<?> boxRiver; // Value injected by FXMLLoader
+    private ComboBox<River> boxRiver; // Value injected by FXMLLoader
 
     @FXML // fx:id="txtStartDate"
     private TextField txtStartDate; // Value injected by FXMLLoader
@@ -47,6 +50,49 @@ public class FXMLController {
 
     @FXML // fx:id="txtResult"
     private TextArea txtResult; // Value injected by FXMLLoader
+    
+    @FXML
+    void doSimula(ActionEvent event) {
+    	txtResult.clear();
+    	
+    	River river = boxRiver.getValue();
+    	if(river==null) {
+    		txtResult.setText("Selezionare un fiume");
+    		return;
+    	}
+    	
+    	double k;
+    	try {
+    		k = Double.parseDouble(txtK.getText());
+    	} catch(NumberFormatException e) {
+    		txtResult.setText("Inserire un valore numerico per il fattore di scala k");
+    		return;
+    	}
+    	
+    	SimulationResult sr = this.model.simula(k, river);
+    	txtResult.appendText(String.format("Numero di giorni in cui non si è potuta garantire l'erogazione minima: %d\n", sr.getnGiorni()));
+    	txtResult.appendText(String.format("Occupazione media del bacino: %f", sr.getcMed()));
+    	
+    }
+
+    @FXML
+    void setData(ActionEvent event) {
+    	txtStartDate.clear();
+    	txtEndDate.clear();
+    	txtNumMeasurements.clear();
+    	txtFMed.clear();
+    	
+    	River river = boxRiver.getValue();
+    	if(river!=null) {
+    		txtStartDate.setText(this.model.getStartDate(river).toString());
+	    	txtEndDate.setText(this.model.getEndDate(river).toString());
+	    	int numMisurazioni = this.model.getNumMisurazioni(river);
+	    	txtNumMeasurements.setText(Integer.toString(numMisurazioni));
+	    	double fMed = this.model.getFMed(river);
+	    	txtFMed.setText(String.format("%.4f", fMed));
+    	}
+
+    }
 
     @FXML // This method is called by the FXMLLoader when initialization is complete
     void initialize() {
@@ -62,5 +108,6 @@ public class FXMLController {
     
     public void setModel(Model model) {
     	this.model = model;
+    	boxRiver.getItems().addAll(this.model.getAllRivers());
     }
 }
